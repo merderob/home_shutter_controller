@@ -1,6 +1,6 @@
 <!DOCTYPE html><html>
 <head>
-<title>rnd shutter control</title>
+<title>shutter control</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
 
@@ -15,14 +15,17 @@
 
 <style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}
 .button {
-	border: none; color: white; padding: 20px 26px;
+	border: none; color: white; 
+	padding: 20px 22px;
 	text-decoration: none; font-size: 24px; margin: 2px; 
-	cursor: pointer; width: 70px;}
+	cursor: pointer; 
+	width: 70px;
+	border-radius: 8px;}
 .outer {width:100%; text-align: center; }
 .inner {display: inline-block; }
-.button.r1{background-color: #fd5a5a;}
-.button.r2{background-color: #b9b9b9;}
-.button.r3{background-color: #dd9d49; transform: rotate(180deg);} 
+.button.r1{background-color: #66e3e3; }
+.button.r2{background-color: white; color: #b9b9b9; border: 2px solid #66e3e3b2;}
+.button.r3{background-color: #66e3e3; transform: rotate(180deg);} 
 .button.lg{background-color: #b9b9b9; width: 200px;}
 input.largerCheckbox {
 width: 40px;
@@ -62,7 +65,7 @@ height: 40px;
 </style></head>
 
 
-<body style="background-color:#fcfaf2;"><h2>rnd shutter control</h2>
+<body style="background-color:#fcfaf2;"><h2>shutter control</h2>
 <p>manual control</p>
 <div class="outer">
 	<div class ="inner"><a href="/get?command=3,up"><button class="button r1"> &#916; </button></a></div>

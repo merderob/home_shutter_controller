@@ -1,7 +1,21 @@
+// Copyright © 2023 Robert Takacs
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 const char index_page [] PROGMEM = R"=====(
 <!DOCTYPE html><html>
 <head>
-<title>rnd shutter control</title>
+<title>shutter control</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:,">
 
@@ -16,14 +30,17 @@ const char index_page [] PROGMEM = R"=====(
 
 <style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}
 .button {
-	border: none; color: white; padding: 20px 26px;
+	border: none; color: white; 
+	padding: 20px 22px;
 	text-decoration: none; font-size: 24px; margin: 2px; 
-	cursor: pointer; width: 70px;}
+	cursor: pointer; 
+	width: 70px;
+	border-radius: 8px;}
 .outer {width:100%; text-align: center; }
 .inner {display: inline-block; }
-.button.r1{background-color: #fd5a5a;}
-.button.r2{background-color: #b9b9b9;}
-.button.r3{background-color: #dd9d49; transform: rotate(180deg);} 
+.button.r1{background-color: #66e3e3; }
+.button.r2{background-color: white; color: #b9b9b9; border: 2px solid #66e3e3b2;}
+.button.r3{background-color: #66e3e3; transform: rotate(180deg);} 
 .button.lg{background-color: #b9b9b9; width: 200px;}
 input.largerCheckbox {
 width: 40px;
@@ -63,7 +80,7 @@ height: 40px;
 </style></head>
 
 
-<body style="background-color:#fcfaf2;"><h2>rnd shutter control</h2>
+<body style="background-color:#fcfaf2;"><h2>shutter control</h2>
 <p>manual control</p>
 <div class="outer">
 	<div class ="inner"><a href="/get?command=3,up"><button class="button r1"> &#916; </button></a></div>
@@ -100,4 +117,5 @@ height: 40px;
 </form>
 </body>
 </html>
+
 )=====";

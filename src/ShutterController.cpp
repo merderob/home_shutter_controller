@@ -1,4 +1,18 @@
-#include "RNDShutterController.h"
+// Copyright © 2023 Robert Takacs
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE 
+// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+// COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+#include "ShutterController.h"
 
 // _______  HEAD ___ HEAD ___ HEAD __ SELECT__ DIR __
 // stop 4 11001011 01111010 01010001 00000100 01010101 
@@ -19,12 +33,12 @@ const unsigned char COMMAND_PALETTE [] = {0b00010001, 0b00110011, 0b001010101};
 const unsigned char DEVICE_PALETTE [] =  {0b000000001, 0b00000010, 0b00000011, 0b00000100, 0b00000000};
 const char HEADER_LENGTH = 3;
 
-RNDShutterController::RNDShutterController(int transmit_pin):
+ShutterController::ShutterController(int transmit_pin):
     transmit_pin_(transmit_pin)
 {
 }
 
-ShutterCommand RNDShutterController::decodeCommand(String command)
+ShutterCommand ShutterController::decodeCommand(String command)
 {
   ShutterCommand decoded_command;
   // A command has the following format: "3,up"
@@ -68,7 +82,7 @@ ShutterCommand RNDShutterController::decodeCommand(String command)
   return decoded_command;
 }
 
-ShutterCommand RNDShutterController::decodeAbsoluteCommand (String device_str, String position_str)
+ShutterCommand ShutterController::decodeAbsoluteCommand (String device_str, String position_str)
 {
   ShutterCommand decoded_command;
   decoded_command.type = Shutter::CommandType::ABSOLUTE;
@@ -95,7 +109,7 @@ ShutterCommand RNDShutterController::decodeAbsoluteCommand (String device_str, S
   return decoded_command;
 }
 
-void RNDShutterController::execute()
+void ShutterController::execute()
 {
   if (!command_queue_.empty())
   {
@@ -105,7 +119,7 @@ void RNDShutterController::execute()
   }
 }
 
-void RNDShutterController::processCommand(const ShutterCommand& command)
+void ShutterController::processCommand(const ShutterCommand& command)
 {
   if (command.device == Shutter::Device::UNKNOWN_DEVICE || command.type == Shutter::CommandType::UNKNOWN
       || command.device == Shutter::Device::ALL // Unsupported for now. TODO!
@@ -124,14 +138,14 @@ void RNDShutterController::processCommand(const ShutterCommand& command)
   }
 }
 
-void RNDShutterController::addCommand(const ShutterCommand& command)
+void ShutterController::addCommand(const ShutterCommand& command)
 {
   command_queue_.push_back(command);
 }
 
-void RNDShutterController::sendCommand(Shutter::Device device, Shutter::Command command)
+void ShutterController::sendCommand(Shutter::Device device, Shutter::Command command)
 {
-    for (int transmission_num = 0; transmission_num < number_of_transmissions_; ++transmission_num)
+    for (int transmission_num = 0; transmission_num < params_.number_of_transmissions; ++transmission_num)
     {
         digitalWrite(transmit_pin_, HIGH);
         delayMicroseconds(params_.sync_on);
@@ -147,7 +161,7 @@ void RNDShutterController::sendCommand(Shutter::Device device, Shutter::Command 
     }
 }
 
-void RNDShutterController::sendAbsoluteCommand(Shutter::Device device, int position)
+void ShutterController::sendAbsoluteCommand(Shutter::Device device, int position)
 {
   if(shutter_calibrations_[device] != 1)
   {
@@ -172,7 +186,7 @@ void RNDShutterController::sendAbsoluteCommand(Shutter::Device device, int posit
   shutter_positions_[device] = position;
 }
 
-void RNDShutterController::calibrate(Shutter::Device device)
+void ShutterController::calibrate(Shutter::Device device)
 {
   sendCommand(device, Shutter::Command::UP);
   delay(25000);
@@ -181,10 +195,10 @@ void RNDShutterController::calibrate(Shutter::Device device)
 }
 
 
-void RNDShutterController::sendWord(unsigned char command) 
+void ShutterController::sendWord(unsigned char command) 
 {
-  for (unsigned char k=0; k < 8; k++) {
-    if ((command>>(7-k)) & 1 )
+  for (unsigned char k = 0; k < 8; k++) {
+    if ((command >> (7 - k)) & 1 )
     {
       // one 
       digitalWrite(transmit_pin_, HIGH);
