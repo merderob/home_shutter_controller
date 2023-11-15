@@ -47,7 +47,7 @@ void setup()
   pinMode(TRANSMIT_PIN, OUTPUT);
 
   // Connect to Wi-Fi network with SSID and password
-  WiFi.begin(Credentials::ssid, Credentials::password);
+  WiFi.begin(Credentials::ssid.c_str(), Credentials::password.c_str());
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
   }

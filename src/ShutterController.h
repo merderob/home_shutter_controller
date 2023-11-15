@@ -16,6 +16,8 @@
 #include "RFParams.h"
 #include "Arduino.h"
 #include <deque>
+#include <array>
+
 // _______  HEAD ___ HEAD ___ HEAD __ SELECT__ DIR __
 // stop 4 11001011 01111010 01010001 00000100 01010101 
 // up4    11001011 01111010 01010001 00000100 00010001
@@ -108,14 +110,15 @@ private:
     /// @brief Sends a command over the transmit pin.
     /// @param command The command to send.
     void sendWord(unsigned char command);
+
     /// @brief The transmit pin on the board.
     int transmit_pin_;
     /// @brief The command queue.
     std::deque<ShutterCommand> command_queue_;
     /// @brief Container storing if the shutters has been calibrated.
-    std::vector<int> shutter_calibrations_ {0, 0, 0, 0};
+    std::array<bool, 4> shutter_calibrations_ {false, false, false, false};
     /// @brief Container storing the absolute positions of the shutters.
-    std::vector<int> shutter_positions_ {0, 0, 0, 0}; // 0: up, 100: down [dont use 100 pls]
+    std::array<int, 4> shutter_positions_ {0, 0, 0, 0}; // 0: up, 100: down [dont use 100 pls]
     /// @brief parameter container structure.
     RFParams params_;
 };

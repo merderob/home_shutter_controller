@@ -111,12 +111,12 @@ ShutterCommand ShutterController::decodeAbsoluteCommand (String device_str, Stri
 
 void ShutterController::execute()
 {
-  if (!command_queue_.empty())
-  {
-    const ShutterCommand& current_command = command_queue_.front();
-    processCommand(current_command);
-    command_queue_.pop_front();
-  }
+    if (!command_queue_.empty())
+    {
+        const ShutterCommand& current_command = command_queue_.front();
+        processCommand(current_command);
+        command_queue_.pop_front();
+    }
 }
 
 void ShutterController::processCommand(const ShutterCommand& command)
@@ -125,22 +125,22 @@ void ShutterController::processCommand(const ShutterCommand& command)
       || command.device == Shutter::Device::ALL // Unsupported for now. TODO!
   )
   {
-    return;
+      return;
   }
 
   if (command.type == Shutter::CommandType::NORMAL)
   {
-    sendCommand(command.device, command.command);
+      sendCommand(command.device, command.command);
   }
   else if (command.type == Shutter::CommandType::ABSOLUTE)
   {
-    sendAbsoluteCommand(command.device, command.position);
+      sendAbsoluteCommand(command.device, command.position);
   }
 }
 
 void ShutterController::addCommand(const ShutterCommand& command)
 {
-  command_queue_.push_back(command);
+    command_queue_.push_back(command);
 }
 
 void ShutterController::sendCommand(Shutter::Device device, Shutter::Command command)
@@ -163,18 +163,18 @@ void ShutterController::sendCommand(Shutter::Device device, Shutter::Command com
 
 void ShutterController::sendAbsoluteCommand(Shutter::Device device, int position)
 {
-  if(shutter_calibrations_[device] != 1)
+  if(!shutter_calibrations_[device])
   {
-    calibrate(device);
+      calibrate(device);
   }
   int delta_p = position - shutter_positions_[device];
   // 100 incr ... 25 s
   int dt_wait_ms = static_cast<int>((static_cast<double>(std::abs(delta_p)) / 100.0) * 25.0) * 1000;
   if (delta_p > 0)
   {
-    // Shutter should move down
-    sendCommand(device, Shutter::Command::DOWN);
-    delay(dt_wait_ms);
+      // Shutter should move down
+      sendCommand(device, Shutter::Command::DOWN);
+      delay(dt_wait_ms);
   }
   else //  (delta_p < 0)
   {
@@ -188,10 +188,10 @@ void ShutterController::sendAbsoluteCommand(Shutter::Device device, int position
 
 void ShutterController::calibrate(Shutter::Device device)
 {
-  sendCommand(device, Shutter::Command::UP);
-  delay(25000);
-  shutter_calibrations_[device] = 1;
-  shutter_positions_[device] = 0;
+    sendCommand(device, Shutter::Command::UP);
+    delay(25000);
+    shutter_calibrations_[device] = true;
+    shutter_positions_[device] = 0;
 }
 
 
