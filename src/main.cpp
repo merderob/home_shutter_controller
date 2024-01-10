@@ -12,12 +12,13 @@
 // COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESPAsyncWebServer.h>
+#include <LittleFS.h>
 
-#include "src/ShutterController.h" 
-#include "credentials/Credentials.h"
-#include "frontend/index.h"
+#include "ShutterController.h" 
+#include "../credentials/Credentials.h"
 
 const unsigned int TRANSMIT_PIN = 1;
 // Set web server port number to 80
@@ -42,9 +43,13 @@ void setup()
   //GPIO 1 (TX) swap the pin to a GPIO.
   // TODO redo thiss
   pinMode(TRANSMIT_PIN, FUNCTION_3); 
-  //Serial.begin(115200);
   // Initialize the output variables as outputs
   pinMode(TRANSMIT_PIN, OUTPUT);
+
+  if (!LittleFS.begin())
+  {
+    return;
+  }
 
   // Connect to Wi-Fi network with SSID and password
   WiFi.begin(Credentials::ssid.c_str(), Credentials::password.c_str());
@@ -52,12 +57,19 @@ void setup()
     delay(500);
   }
 
-    // Send web page with input fields to client
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_page);
-  });
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+          { request->send(LittleFS, "/index.html", "text/html"); });
 
-   // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
+  // Route for root index.css
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(LittleFS, "/style.css", "text/css"); });
+
+
+  // Route for root index.js
+  server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(LittleFS, "/index.js", "text/javascript"); }); 
+
+  // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
   server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
     //int paramsNr = request->params();
     if (request->hasParam(command_param)) {
@@ -83,12 +95,11 @@ void setup()
 
       }
     }
-    request->send_P(200, "text/html", index_page);
+     request->send(LittleFS, "/index.html", "text/html");
   });
 
   server.onNotFound(notFound);
 
-  // Start web server
   server.begin();
 }
 

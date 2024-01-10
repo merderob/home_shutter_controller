@@ -1,4 +1,8 @@
 
 .vscode/
 
+.pio/
+
 credentials/Credentials.h
+
+mklittlefs.exe
