@@ -17,7 +17,7 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 
-#include "ShutterController.h" 
+#include "shutter_controller.h" 
 #include "../credentials/Credentials.h"
 
 const unsigned int TRANSMIT_PIN = 1;
@@ -34,75 +34,79 @@ const char* living_room_window_param = "living_room_window";// String type input
 const char* bedroom_door_param = "bedroom_door";// String type input
 const char* bedroom_window_param = "bedroom_window";// String type input
 
-void notFound(AsyncWebServerRequest *request) {
-  request->send(404, "text/plain", "Not found");
+void notFound(AsyncWebServerRequest *request) 
+{
+    request->send(404, "text/plain", "Not found");
 }
 
 void setup() 
 {
-  //GPIO 1 (TX) swap the pin to a GPIO.
-  // TODO redo thiss
-  pinMode(TRANSMIT_PIN, FUNCTION_3); 
-  // Initialize the output variables as outputs
-  pinMode(TRANSMIT_PIN, OUTPUT);
+    //GPIO 1 (TX) swap the pin to a GPIO.
+    // TODO redo thiss
+    pinMode(TRANSMIT_PIN, FUNCTION_3); 
+    // Initialize the output variables as outputs
+    pinMode(TRANSMIT_PIN, OUTPUT);
 
-  if (!LittleFS.begin())
-  {
-    return;
-  }
+    if (!LittleFS.begin())
+    {
+        return;
+    }
 
-  // Connect to Wi-Fi network with SSID and password
-  WiFi.begin(Credentials::ssid.c_str(), Credentials::password.c_str());
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-  }
+    // Connect to Wi-Fi network with SSID and password
+    WiFi.begin(Credentials::ssid.c_str(), Credentials::password.c_str());
+    while (WiFi.status() != WL_CONNECTED) 
+    {
+        delay(500);
+    }
 
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
           { request->send(LittleFS, "/index.html", "text/html"); });
 
-  // Route for root index.css
-  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
+    // Route for root index.css
+    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(LittleFS, "/style.css", "text/css"); });
 
 
-  // Route for root index.js
-  server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request)
+    // Route for root index.js
+    server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(LittleFS, "/index.js", "text/javascript"); }); 
 
-  // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
-  server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    //int paramsNr = request->params();
-    if (request->hasParam(command_param)) {
-      // Normal motion command
-      String command = request->getParam(command_param)->value();
-      ShutterCommand normal_command = controller.decodeCommand(command);
-      controller.addCommand(normal_command);
-    }
-    else if (request->hasParam(shutter_scale_param))
+    // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
+    server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) 
     {
-      // Absolute motion command
-      String position_str = request->getParam(shutter_scale_param)->value();
-      const size_t param_num = request->params();
-      for (size_t param_id = 0; param_id < param_num; param_id++)
-      {
-        AsyncWebParameter* p = request->getParam(param_id);
-        if(p->name() == shutter_scale_param)
+        //int paramsNr = request->params();
+        if (request->hasParam(command_param)) 
         {
-          continue;
+            // Normal motion command
+            String command = request->getParam(command_param)->value();
+            ShutterCommand normal_command = controller.decodeCommand(command);
+            controller.addCommand(normal_command);
         }
-        ShutterCommand absolute_command = controller.decodeAbsoluteCommand(p->name(), position_str);
-        controller.addCommand(absolute_command);
-
+        else if (request->hasParam(shutter_scale_param))
+        {
+        // Absolute motion command
+        String position_str = request->getParam(shutter_scale_param)->value();
+        const size_t param_num = request->params();
+        for (size_t param_id = 0; param_id < param_num; param_id++)
+        {
+            AsyncWebParameter* p = request->getParam(param_id);
+            if (p->name() == shutter_scale_param)
+            {
+                continue;
+            }
+            ShutterCommand absolute_command = controller.decodeAbsoluteCommand(p->name(), position_str);
+            controller.addCommand(absolute_command);
       }
     }
-     request->send(LittleFS, "/index.html", "text/html");
-  });
+        request->send(LittleFS, "/index.html", "text/html");
+    });
 
-  server.onNotFound(notFound);
+    server.onNotFound(notFound);
 
-  server.begin();
+    server.begin();
 }
 
-void loop(){
-  controller.execute();
+void loop()
+{
+    controller.execute();
 }

@@ -12,7 +12,7 @@
 // COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "ShutterController.h"
+#include "shutter_controller.h"
 
 // _______  HEAD ___ HEAD ___ HEAD __ SELECT__ DIR __
 // stop 4 11001011 01111010 01010001 00000100 01010101 
@@ -103,10 +103,10 @@ ShutterCommand ShutterController::decodeAbsoluteCommand (String device_str, Stri
   {
     decoded_command.device = Shutter::Device::BEDROOM_WINDOW;
   }
-  const int received_position = position_str.toInt();
-  const int decoded_position = std::max(0, std::min(received_position, 100));
-  decoded_command.position = decoded_position;
-  return decoded_command;
+    const int received_position = position_str.toInt();
+    const int decoded_position = std::max(0, std::min(received_position, 100));
+    decoded_command.position = decoded_position;
+    return decoded_command;
 }
 
 void ShutterController::execute()
@@ -121,21 +121,21 @@ void ShutterController::execute()
 
 void ShutterController::processCommand(const ShutterCommand& command)
 {
-  if (command.device == Shutter::Device::UNKNOWN_DEVICE || command.type == Shutter::CommandType::UNKNOWN
-      || command.device == Shutter::Device::ALL // Unsupported for now. TODO!
-  )
-  {
-      return;
-  }
+    if (command.device == Shutter::Device::UNKNOWN_DEVICE || 
+        command.type == Shutter::CommandType::UNKNOWN || 
+        command.device == Shutter::Device::ALL) // Unsupported for now. TODO!
+    {
+        return;
+    }
 
-  if (command.type == Shutter::CommandType::NORMAL)
-  {
-      sendCommand(command.device, command.command);
-  }
-  else if (command.type == Shutter::CommandType::ABSOLUTE)
-  {
-      sendAbsoluteCommand(command.device, command.position);
-  }
+    if (command.type == Shutter::CommandType::NORMAL)
+    {
+        sendCommand(command.device, command.command);
+    }
+    else if (command.type == Shutter::CommandType::ABSOLUTE)
+    {
+        sendAbsoluteCommand(command.device, command.position);
+    }
 }
 
 void ShutterController::addCommand(const ShutterCommand& command)
@@ -163,27 +163,27 @@ void ShutterController::sendCommand(Shutter::Device device, Shutter::Command com
 
 void ShutterController::sendAbsoluteCommand(Shutter::Device device, int position)
 {
-  if(!shutter_calibrations_[device])
-  {
-      calibrate(device);
-  }
-  int delta_p = position - shutter_positions_[device];
-  // 100 incr ... 25 s
-  int dt_wait_ms = static_cast<int>((static_cast<double>(std::abs(delta_p)) / 100.0) * 25.0) * 1000;
-  if (delta_p > 0)
-  {
-      // Shutter should move down
-      sendCommand(device, Shutter::Command::DOWN);
-      delay(dt_wait_ms);
-  }
-  else //  (delta_p < 0)
-  {
-    // Shutter should move up
-    sendCommand(device, Shutter::Command::UP);
-    delay(dt_wait_ms);
-  }
-  sendCommand(device, Shutter::Command::STOP);
-  shutter_positions_[device] = position;
+    if (!shutter_calibrations_[device])
+    {
+        calibrate(device);
+    }
+    int delta_p = position - shutter_positions_[device];
+    // 100 incr ... 25 s
+    int dt_wait_ms = std::round((static_cast<double>(std::abs(delta_p)) / 100.0) * 25.0 * 1000.0);
+    if (delta_p > 0)
+    {
+        // Shutter should move down
+        sendCommand(device, Shutter::Command::DOWN);
+        delay(dt_wait_ms);
+    }
+    else //  (delta_p < 0)
+    {
+        // Shutter should move up
+        sendCommand(device, Shutter::Command::UP);
+        delay(dt_wait_ms);
+    }
+    sendCommand(device, Shutter::Command::STOP);
+    shutter_positions_[device] = position;
 }
 
 void ShutterController::calibrate(Shutter::Device device)
