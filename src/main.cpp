@@ -18,7 +18,7 @@
 #include <LittleFS.h>
 
 #include "shutter_controller.h" 
-#include "../credentials/Credentials.h"
+#include "../credentials/credentials.h"
 
 const unsigned int TRANSMIT_PIN = 1;
 // Set web server port number to 80
