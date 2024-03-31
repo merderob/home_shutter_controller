@@ -13,7 +13,6 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "rf_params.h"
 #include "shutter.h"
 #include "transmitter.h"
 
@@ -55,28 +54,22 @@ public:
     /// @param position_str The string representation of the absolute target position.
     /// @return A shutter command representation of the input command.
     ShutterCommand decodeAbsoluteCommand(String device_str, String position_str);
-    void sendAbsoluteCommand(Shutter::Device device, int position);
+
+    void sendNormalCommand(Shutter& shutter, Shutter::Command command);
+
+    void sendAbsoluteCommand(Shutter& shutter, int position);
 private:
-    /// @brief The inner command sending function.
-    /// @param device The commanded device.
-    /// @param command The command sent.
-    void sendCommand(Shutter::Device device, Shutter::Command command);
     /// @brief Processes a command.
     /// @param command Reference to the commamnd instance.
     void processCommand(const ShutterCommand& command);
     /// @brief Calibrates a device.
-    /// @param device The device to calibrate. 
-    void calibrate(Shutter::Device device);
-    /// @brief Sends a command over the transmit pin.
-    /// @param command The command to send.
-    void sendWord(unsigned char command);
+    /// @param shutter Reference to the shutter instance to be calibrated. 
+    void calibrate(Shutter& shutter);
 
-    /// @brief The transmit pin on the board.
-    int transmit_pin_;
     /// @brief The command queue.
     std::deque<ShutterCommand> command_queue_;
     /// @brief Container storing the shutters.
     std::array<Shutter, 4> shutters_; //
-    /// @brief parameter container structure.
-    RFParams params_;
+    /// @brief The transmitter.
+    Transmitter transmitter_;
 };

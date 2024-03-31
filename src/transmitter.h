@@ -14,24 +14,32 @@
 
 #pragma once
 
-struct ShutterParams
+#include "rf_params.h"
+#include "shutter.h"
+#include <array>
+
+class Transmitter
 {
-    static const unsigned char bedroom_window_device_id = 0b000000001;
-    static constexpr double bedroom_window_time_up = 26.695;
-    static constexpr double bedroom_window_time_down = 26.1;
+public:
+    Transmitter (int transmit_pin);
+    /// @brief TODO.
+    /// @param device_id The commanded device's id.
+    /// @param command The command sent.
+    void sendCommand(unsigned char device_id, Shutter::Command command);
+private:
+    /// @brief Sends a command over the transmit pin.
+    /// @param command The command to send.
+    void sendWord(unsigned char command);
+    /// @brief Sends the synchronization signal before the transmission.
+    void sendSync();
+    /// @brief Sends the message headers.
+    void sendHeader();
 
-    static const unsigned char bedroom_door_device_id = 0b00000010;
-    static constexpr double bedroom_door_time_up = 26.457;
-    static constexpr double bedroom_door_time_down = 25.06;
+    /// @brief The transmit pin on the board.
+    int transmit_pin_;
+    /// @brief parameter container structure.
+    RFParams params_;
 
-    static const unsigned char living_window_device_id = 0b00000011;
-    static constexpr double living_room_window_time_up = 24.5;
-    static constexpr double living_room_window_time_down = 25.06;
-
-    static const unsigned char living_door_device_id = 0b00000100;
-    static constexpr double living_room_door_time_up = 26.1;
-    static constexpr double living_room_door_time_down = 24.76;
-
-    static const unsigned char all_device_id = 0b00000000;
-    static const unsigned char none_device_id = 0b00000101;
+    const std::array<char, 3> header_ {0b11001011, 0b01111010, 0b01010001};
+    std::array<char, 3> commands_;
 };

@@ -13,13 +13,15 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "shutter.h"
+#include "shutter_params.h"
 
-Shutter::Shutter() : position_(0), calibrated_(false), time_up_(0), time_down_(0)
+Shutter::Shutter() : device_id_(ShutterParams::none_device_id), position_(0), calibrated_(false), time_up_(0), time_down_(0)
 {
 
 }
 
-Shutter::Shutter(double time_up, double time_down): time_up_(time_up), time_down_(time_down)
+Shutter::Shutter(unsigned char id, double time_up, double time_down): 
+    device_id_(id), position_(0), time_up_(time_up), time_down_(time_down)
 {
 }
 
@@ -41,4 +43,20 @@ int Shutter::getPosition() const
 void Shutter::setPosition(int position)
 {
     position_ = position;
+}
+
+unsigned char Shutter::getId() const
+{
+    return device_id_;
+}
+
+
+double Shutter::getTimeUp() const
+{
+    return time_up_;
+}
+
+double Shutter::getTimeDown() const
+{
+    return time_down_;
 }

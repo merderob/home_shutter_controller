@@ -34,6 +34,9 @@ const char* living_room_window_param = "living_room_window";// String type input
 const char* bedroom_door_param = "bedroom_door";// String type input
 const char* bedroom_window_param = "bedroom_window";// String type input
 
+unsigned long prev_exec_time_ms = 0;
+unsigned long exec_time_ms = 100; 
+
 void notFound(AsyncWebServerRequest *request) 
 {
     request->send(404, "text/plain", "Not found");
@@ -74,7 +77,6 @@ void setup()
     // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
     server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) 
     {
-        //int paramsNr = request->params();
         if (request->hasParam(command_param)) 
         {
             // Normal motion command
@@ -108,5 +110,9 @@ void setup()
 
 void loop()
 {
-    controller.execute();
+    const auto cur_exec_time_ms = millis();
+    if (cur_exec_time_ms - prev_exec_time_ms > exec_time_ms)
+    {
+        controller.execute();
+    }
 }
