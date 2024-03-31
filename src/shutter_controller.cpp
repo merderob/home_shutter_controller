@@ -13,6 +13,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "shutter_controller.h"
+#include "shutter_params.h"
 
 // _______  HEAD ___ HEAD ___ HEAD __ SELECT__ DIR __
 // stop 4 11001011 01111010 01010001 00000100 01010101 
@@ -36,73 +37,78 @@ const char HEADER_LENGTH = 3;
 ShutterController::ShutterController(int transmit_pin):
     transmit_pin_(transmit_pin)
 {
+    shutters_[Shutter::Device::LIVING_DOOR] = Shutter(ShutterParams::living_room_door_time_up, ShutterParams::living_room_door_time_down);
+    shutters_[Shutter::Device::LIVING_WINDOW] = Shutter(ShutterParams::living_room_window_time_up, ShutterParams::living_room_window_time_down);
+    shutters_[Shutter::Device::BEDROOM_DOOR] = Shutter(ShutterParams::bedroom_door_time_up, ShutterParams::bedroom_door_time_down);
+    shutters_[Shutter::Device::BEDROOM_WINDOW] = Shutter(ShutterParams::bedroom_window_time_up, ShutterParams::bedroom_window_time_down);
 }
 
 ShutterCommand ShutterController::decodeCommand(String command)
 {
-  ShutterCommand decoded_command;
-  // A command has the following format: "3,up"
-  if (command[1] != ',')
-  {
+    ShutterCommand decoded_command;
+    // A command has the following format: "3,up"
+    if (command[1] != ',')
+    {
+      return decoded_command;
+    }
+    decoded_command.type = Shutter::CommandType::NORMAL;
+    char device_char = command[0];
+    char dir_char = command[2];
+
+    switch (device_char)
+    {
+    case '0':
+      decoded_command.device = Shutter::Device::BEDROOM_WINDOW;
+      break;
+    case '1':
+      decoded_command.device = Shutter::Device::BEDROOM_DOOR;
+      break;
+    case '2':
+      decoded_command.device = Shutter::Device::LIVING_WINDOW;
+      break;
+    case '3':
+      decoded_command.device = Shutter::Device::LIVING_DOOR;
+      break;
+    }
+
+    switch (dir_char)
+    {
+    case 'u':
+        decoded_command.command = Shutter::Command::UP;
+        break;
+    case 's':
+        decoded_command.command = Shutter::Command::STOP;
+        break;
+    case 'd':
+        decoded_command.command = Shutter::Command::DOWN;
+        break;
+    }
+
     return decoded_command;
-  }
-  decoded_command.type = Shutter::CommandType::NORMAL;
-  char device_char = command[0];
-  char dir_char = command[2];
-
-  switch (device_char)
-  {
-  case '0':
-    decoded_command.device = Shutter::Device::BEDROOM_WINDOW;
-    break;
-  case '1':
-    decoded_command.device = Shutter::Device::BEDROOM_DOOR;
-    break;
-  case '2':
-    decoded_command.device = Shutter::Device::LIVING_WINDOW;
-    break;
-  case '3':
-    decoded_command.device = Shutter::Device::LIVING_DOOR;
-    break;
-  }
-
-  switch (dir_char)
-  {
-  case 'u':
-    decoded_command.command = Shutter::Command::UP;
-    break;
-  case 's':
-    decoded_command.command = Shutter::Command::STOP;
-    break;
-  case 'd':
-    decoded_command.command = Shutter::Command::DOWN;
-    break;
-  }
-
-  return decoded_command;
 }
 
 ShutterCommand ShutterController::decodeAbsoluteCommand (String device_str, String position_str)
 {
-  ShutterCommand decoded_command;
-  decoded_command.type = Shutter::CommandType::ABSOLUTE;
-  // Select device
-  if (device_str == "living_room_door")
-  {
-    decoded_command.device = Shutter::Device::LIVING_DOOR;
-  }
-  else if (device_str == "living_room_window")
-  {
-    decoded_command.device = Shutter::Device::LIVING_WINDOW;
-  }
-  else if (device_str == "bedroom_door")
-  {
-    decoded_command.device = Shutter::Device::BEDROOM_DOOR;
-  }
-  else if (device_str == "bedroom_window")
-  {
-    decoded_command.device = Shutter::Device::BEDROOM_WINDOW;
-  }
+    ShutterCommand decoded_command;
+    decoded_command.type = Shutter::CommandType::ABSOLUTE;
+    // Select device
+    if (device_str == "living_room_door")
+    {
+        decoded_command.device = Shutter::Device::LIVING_DOOR;
+    }
+    else if (device_str == "living_room_window")
+    {
+        decoded_command.device = Shutter::Device::LIVING_WINDOW;
+    }
+    else if (device_str == "bedroom_door")
+    {
+        decoded_command.device = Shutter::Device::BEDROOM_DOOR;
+    }
+    else if (device_str == "bedroom_window")
+    {
+        decoded_command.device = Shutter::Device::BEDROOM_WINDOW;
+    }
+
     const int received_position = position_str.toInt();
     const int decoded_position = std::max(0, std::min(received_position, 100));
     decoded_command.position = decoded_position;
@@ -163,11 +169,13 @@ void ShutterController::sendCommand(Shutter::Device device, Shutter::Command com
 
 void ShutterController::sendAbsoluteCommand(Shutter::Device device, int position)
 {
-    if (!shutter_calibrations_[device])
+    auto& shutter = shutters_[device];
+    if (!shutter.calibrated())
     {
         calibrate(device);
+        shutter.setCalibrated(true);
     }
-    int delta_p = position - shutter_positions_[device];
+    int delta_p = position - shutter.getPosition();
     // 100 incr ... 25 s
     int dt_wait_ms = std::round((static_cast<double>(std::abs(delta_p)) / 100.0) * 25.0 * 1000.0);
     if (delta_p > 0)
@@ -183,36 +191,34 @@ void ShutterController::sendAbsoluteCommand(Shutter::Device device, int position
         delay(dt_wait_ms);
     }
     sendCommand(device, Shutter::Command::STOP);
-    shutter_positions_[device] = position;
+    shutter.setPosition(position);
 }
 
 void ShutterController::calibrate(Shutter::Device device)
 {
     sendCommand(device, Shutter::Command::UP);
     delay(25000);
-    shutter_calibrations_[device] = true;
-    shutter_positions_[device] = 0;
 }
-
 
 void ShutterController::sendWord(unsigned char command) 
 {
-  for (unsigned char k = 0; k < 8; k++) {
-    if ((command >> (7 - k)) & 1 )
+    for (unsigned char k = 0; k < 8; k++) 
     {
-      // one 
-      digitalWrite(transmit_pin_, HIGH);
-      delayMicroseconds(params_.one_high_send);
-      digitalWrite(transmit_pin_, LOW);    
-      delayMicroseconds(params_.one_low_send);
+        if ((command >> (7 - k)) & 1 )
+        {
+            // one 
+            digitalWrite(transmit_pin_, HIGH);
+            delayMicroseconds(params_.one_high_send);
+            digitalWrite(transmit_pin_, LOW);    
+            delayMicroseconds(params_.one_low_send);
+        }
+        else
+        {
+            // Zero
+            digitalWrite(transmit_pin_, HIGH);
+            delayMicroseconds(params_.zero_high_send);
+            digitalWrite(transmit_pin_, LOW);    
+            delayMicroseconds(params_.zero_low_send);
+        }
     }
-    else
-    {
-      // Zero
-      digitalWrite(transmit_pin_, HIGH);
-      delayMicroseconds(params_.zero_high_send);
-      digitalWrite(transmit_pin_, LOW);    
-      delayMicroseconds(params_.zero_low_send);
-    }
-  }
 }

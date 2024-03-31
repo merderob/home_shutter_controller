@@ -14,52 +14,12 @@
 
 #pragma once
 #include "rf_params.h"
+#include "shutter.h"
+#include "transmitter.h"
+
 #include "Arduino.h"
 #include <deque>
 #include <array>
-
-// _______  HEAD ___ HEAD ___ HEAD __ SELECT__ DIR __
-// stop 4 11001011 01111010 01010001 00000100 01010101 
-// up4    11001011 01111010 01010001 00000100 00010001
-// down4  11001011 01111010 01010001 00000100 00110011
-
-// stop 3 11001011 01111010 01010001 00000011 01010101 
-// up3    11001011 01111010 01010001 00000011 00010001
-
-// stop2  11001011 01111010 01010001 00000010 01010101 
-
-// stop1  11001011 01111010 01010001 01010001 01010101 
-
-// stopA  11001011 01111010 01010001 00000000 01010101
-
-class Shutter
-{
-public:
-    enum Device
-    {
-        BEDROOM_WINDOW,
-        BEDROOM_DOOR,
-        LIVING_WINDOW,
-        LIVING_DOOR,
-        ALL,
-        UNKNOWN_DEVICE
-    };
-
-    enum Command
-    {
-        UP,
-        DOWN,
-        STOP,
-        UNKNOWN_COMMAND
-    };
-
-    enum CommandType
-    {
-        NORMAL,
-        ABSOLUTE,
-        UNKNOWN
-    };
-};
 
 /// @brief Shorthand structure for a shutter command.
 struct ShutterCommand
@@ -115,10 +75,8 @@ private:
     int transmit_pin_;
     /// @brief The command queue.
     std::deque<ShutterCommand> command_queue_;
-    /// @brief Container storing if the shutters has been calibrated.
-    std::array<bool, 4> shutter_calibrations_ {false, false, false, false};
-    /// @brief Container storing the absolute positions of the shutters.
-    std::array<int, 4> shutter_positions_ {0, 0, 0, 0}; // 0: up, 100: down [dont use 100 pls]
+    /// @brief Container storing the shutters.
+    std::array<Shutter, 4> shutters_; //
     /// @brief parameter container structure.
     RFParams params_;
 };
