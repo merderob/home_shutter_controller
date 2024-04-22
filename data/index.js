@@ -39,3 +39,26 @@ function sendAbsoluteCommand(form)
         form.action += ',bedroom_window'
     }
 }
+
+function calibrate(shutter_num) 
+{
+    const requestBody = {"please": shutter_num};
+    const requestOptions = 
+    {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 
+    },
+        body: JSON.stringify(requestBody)
+    };
+
+    fetch("/api/calibrate", requestOptions)
+    .then(res => res.json()).then( data => 
+        {
+            console.log(data);
+            document.getElementById("cal_" + shutter_num).style.background='#000000';
+        })
+        .catch(function (err) 
+        {
+            console.log("Something went wrong!", err)
+        });
+}

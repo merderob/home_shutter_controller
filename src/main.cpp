@@ -16,6 +16,7 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
+#include <ArduinoJson.h>
 
 #include "shutter_controller.h" 
 #include "../credentials/credentials.h"
@@ -37,13 +38,19 @@ const char* bedroom_window_param = "bedroom_window";// String type input
 unsigned long prev_exec_time_ms = 0;
 unsigned long exec_time_ms = 100; 
 
+
 void notFound(AsyncWebServerRequest *request) 
 {
     request->send(404, "text/plain", "Not found");
 }
 
+
 void setup() 
 {
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
+
     //GPIO 1 (TX) swap the pin to a GPIO.
     // TODO redo thiss
     pinMode(TRANSMIT_PIN, FUNCTION_3); 
@@ -73,6 +80,25 @@ void setup()
     // Route for root index.js
     server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(LittleFS, "/index.js", "text/javascript"); }); 
+
+    server.onRequestBody([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+    if (request->url() == "/api/calibrate") 
+    {
+        JsonDocument  ret;
+        deserializeJson(ret, data);
+        if (ret.isNull()) 
+        {
+            notFound(request);
+        }
+        if (!ret.containsKey("please")) 
+        {
+            notFound(request);
+        }
+        const auto command = controller.decodeCalibrationCommand(ret["please"]);
+        controller.addCommand(command);
+        request->send(200);
+    }
+    });
 
     // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
     server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) 
