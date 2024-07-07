@@ -14,18 +14,23 @@
 
 #pragma once
 
-#include "rf_params.h"
-#include "shutter.h"
 #include <array>
 
+#include "rf_params.h"
+#include "instruction.h"
+
+/// @brief Class acting as a transmitter instance.
 class Transmitter
 {
 public:
+    /// @brief Constructor.
+    /// @param transmit_pin The transmit pin.
     Transmitter (int transmit_pin);
-    /// @brief TODO.
+
     /// @param device_id The commanded device's id.
-    /// @param command The command sent.
-    void sendCommand(unsigned char device_id, Shutter::Command command);
+    /// @param instruction The command sent.
+    /// @return True, if the command was successfully sent.
+    bool sendCommand(unsigned char device_id, Instruction instruction);
 private:
     /// @brief Sends a command over the transmit pin.
     /// @param command The command to send.
@@ -41,5 +46,5 @@ private:
     RFParams params_;
 
     const std::array<char, 3> header_ {0b11001011, 0b01111010, 0b01010001};
-    std::array<char, 3> commands_;
+    std::array<char, 3> instructions_;
 };

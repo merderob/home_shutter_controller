@@ -42,7 +42,7 @@ function sendAbsoluteCommand(form)
 
 function calibrate(shutter_num) 
 {
-    const requestBody = {"please": shutter_num};
+    const requestBody = {"calibrate": shutter_num};
     const requestOptions = 
     {
         method: 'POST',

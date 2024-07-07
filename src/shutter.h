@@ -13,6 +13,10 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
+#include "command.h"
+#include "transmitter.h"
+#include <memory>
+#include <deque>
 
 class Shutter
 {
@@ -26,45 +30,26 @@ public:
         ALL,
         UNKNOWN_DEVICE
     };
-
-    enum Command
-    {
-        UP,
-        DOWN,
-        STOP,
-        UNKNOWN_COMMAND
-    };
-
-    enum CommandType
-    {
-        NORMAL,
-        ABSOLUTE,
-        CALIBRATE,
-        UNKNOWN
-    };
-
     Shutter();
 
     /// @brief  Constructor.
     /// @param time_up Time required to move up.
     /// @param time_down Time required to move down.
-    Shutter(unsigned char id, double time_up, double time_down);
+    Shutter(std::shared_ptr<Transmitter> transmitter, unsigned char id, double time_up, double time_down);
 
     bool calibrated() const;
 
-    void setCalibrated(bool calibrated);
+    void addCommand(std::unique_ptr<Command> command);
 
-    int getPosition() const;
+    void execute();
 
-    void setPosition(int position);
-
-    unsigned char getId() const;
-
-    double getTimeUp() const;
-
-    double getTimeDown() const;
+    void clearQueue();
 
 private:
+    void executeSend(const std::unique_ptr<Command>& command);
+
+    void executeDone(const std::unique_ptr<Command>& command);
+
     /// @brief The device id.
     unsigned char device_id_ = 0b000000111;
     /// @brief The current position (0: up, 100: down). 
@@ -76,4 +61,6 @@ private:
     /// @brief Time required to move down. [s]
     double time_down_ = 0.0;
 
+    std::deque<std::unique_ptr<Command>> commands_;
+    std::shared_ptr<Transmitter> transmitter_;
 };
