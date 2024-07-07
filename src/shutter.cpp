@@ -23,8 +23,8 @@ Shutter::Shutter() :
 
 }
 
-Shutter::Shutter(std::shared_ptr<Transmitter> Transmitter, unsigned char id, double time_up, double time_down): 
-    device_id_(id), position_(0), time_up_(time_up), time_down_(time_down)
+Shutter::Shutter(std::shared_ptr<Transmitter> transmitter, unsigned char id, double time_up, double time_down): 
+    device_id_(id), position_(0), time_up_(time_up), time_down_(time_down), transmitter_(transmitter)
 {
 }
 
@@ -142,7 +142,7 @@ void Shutter::execute()
     {
         return;
     }
-    
+
     auto& command = commands_.front();
     const auto now_ms = millis();
     command->update(now_ms);

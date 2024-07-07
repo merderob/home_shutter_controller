@@ -17,11 +17,12 @@
 
 Transmitter::Transmitter(int transmit_pin): transmit_pin_(transmit_pin)
 {
+#ifndef DEBUG
     //GPIO 1 (TX) swap the pin to a GPIO.
     pinMode(transmit_pin_, FUNCTION_3); 
     // Initialize the output variables as outputs
     pinMode(transmit_pin_, OUTPUT);
-    
+#endif
     instructions_[Instruction::UP] = 0b00010001;
     instructions_[Instruction::DOWN] = 0b00110011;
     instructions_[Instruction::STOP] = 0b001010101;
