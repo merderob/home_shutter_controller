@@ -40,7 +40,7 @@ ShutterController::ShutterController(int transmit_pin):
         ShutterParams::bedroom_window_time_down);
 }
 
-ShutterCommand ShutterController::decodeCommand(String command)
+ShutterCommand ShutterController::decodeCommand(const String& command)
 {
     ShutterCommand decoded_command;
     // A command has the following format: "3,up"
@@ -85,7 +85,7 @@ ShutterCommand ShutterController::decodeCommand(String command)
     return decoded_command;
 }
 
-ShutterCommand ShutterController::decodeAbsoluteCommand (String device_str, String position_str)
+ShutterCommand ShutterController::decodeAbsoluteCommand (const String& device_str, const String& position_str)
 {
     ShutterCommand decoded_command;
     decoded_command.type = Shutter::CommandType::ABSOLUTE;
@@ -111,6 +111,33 @@ ShutterCommand ShutterController::decodeAbsoluteCommand (String device_str, Stri
     const int decoded_position = std::max(0, std::min(received_position, 100));
     decoded_command.position = decoded_position;
     return decoded_command;
+}
+
+ShutterCommand ShutterController::decodeCalibrationCommand(const String& device_str)
+{
+    ShutterCommand ret;
+    ret.type = Shutter::CommandType::CALIBRATE;
+    if (device_str == "0")
+    {
+        ret.device = Shutter::Device::LIVING_DOOR;
+    }
+    else if (device_str == "1")
+    {
+        ret.device = Shutter::Device::LIVING_WINDOW;
+    }
+    else if (device_str == "2")
+    {
+        ret.device = Shutter::Device::LIVING_WINDOW;
+    }
+        else if (device_str == "3")
+    {
+        ret.device = Shutter::Device::LIVING_WINDOW;
+    }
+    else
+    {
+        ret.device = Shutter::Device::UNKNOWN_DEVICE;
+    }
+    return ret;
 }
 
 void ShutterController::execute()
@@ -140,6 +167,10 @@ void ShutterController::processCommand(const ShutterCommand& command)
     else if (command.type == Shutter::CommandType::ABSOLUTE)
     {
         sendAbsoluteCommand(shutter, command.position);
+    }
+    else if (command.type == Shutter::CommandType::CALIBRATE)
+    {
+        calibrate(shutter);
     }
 }
 

@@ -40,23 +40,38 @@ public:
     /// @brief  Constructor.
     /// @param transmit_pin The transmit pin on the board.
     ShutterController(int transmit_pin);
+
     /// @brief Executes the main control loop.
     void execute();
+
     /// @brief Adds a command to the command queue.
     /// @param command Reference to the added command.
     void addCommand(const ShutterCommand& command);
+
     /// @brief Decodoes a command from the input string.
     /// @param command The command to decode.
     /// @return A shutter command representation of the input command.
-    ShutterCommand decodeCommand(String command);
+    ShutterCommand decodeCommand(const String& command);
+
     /// @brief Decodes an absolute command based on the inputs.
     /// @param device_str The string representation of the commanded device.
     /// @param position_str The string representation of the absolute target position.
     /// @return A shutter command representation of the input command.
-    ShutterCommand decodeAbsoluteCommand(String device_str, String position_str);
+    ShutterCommand decodeAbsoluteCommand(const String& device_str, const String& position_str);
 
+    /// @brief Decodes a calibration command.
+    /// @param device_str The string representation of the commanded device.
+    /// @return A shutter command representation of the input command.
+    ShutterCommand decodeCalibrationCommand(const String& device_str);
+
+    /// @brief Sends a normal motion command.
+    /// @param shutter The shutter which is being commanded.
+    /// @param command The command being sent.
     void sendNormalCommand(Shutter& shutter, Shutter::Command command);
 
+    /// @brief Sends an absolute motion command.
+    /// @param shutter The shutter which is being commanded.
+    /// @param position The position where the shutter is being commanded to move.
     void sendAbsoluteCommand(Shutter& shutter, int position);
 private:
     /// @brief Processes a command.

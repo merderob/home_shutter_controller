@@ -35,7 +35,11 @@ html {
 .button.r3 {
     background-color: #66e3e3; 
     transform: rotate(180deg);
-} 
+}
+
+.button.cal {
+  background-color: #eee9a0; 
+}
 
 .button.lg
 {

@@ -39,6 +39,7 @@ public:
     {
         NORMAL,
         ABSOLUTE,
+        CALIBRATE,
         UNKNOWN
     };
 
