@@ -17,21 +17,7 @@
 #include "transmitter.h"
 
 #include "Arduino.h"
-#include <deque>
 #include <array>
-
-/// @brief Shorthand structure for a shutter command.
-struct ShutterCommand
-{
-    /// @brief The command type.
-    Shutter::CommandType type = Shutter::CommandType::UNKNOWN;
-    /// @brief The commanded device.
-    Shutter::Device device  = Shutter::Device::UNKNOWN_DEVICE; 
-    /// @brief The commanded direction (in case of a relative command).
-    Shutter::Command command  = Shutter::Command::UNKNOWN_COMMAND; 
-    /// @brief The absolute position to command.
-    int position = 0;
-};
 
 /// @brief Class encapsulating the shutter controller logic.
 class ShutterController
@@ -44,47 +30,26 @@ public:
     /// @brief Executes the main control loop.
     void execute();
 
-    /// @brief Adds a command to the command queue.
-    /// @param command Reference to the added command.
-    void addCommand(const ShutterCommand& command);
-
     /// @brief Decodoes a command from the input string.
     /// @param command The command to decode.
     /// @return A shutter command representation of the input command.
-    ShutterCommand decodeCommand(const String& command);
+    void createRelativeCommand(const String& command);
 
     /// @brief Decodes an absolute command based on the inputs.
     /// @param device_str The string representation of the commanded device.
     /// @param position_str The string representation of the absolute target position.
     /// @return A shutter command representation of the input command.
-    ShutterCommand decodeAbsoluteCommand(const String& device_str, const String& position_str);
+    void createAbsoluteCommand(const String& device_str, const String& position_str);
 
     /// @brief Decodes a calibration command.
     /// @param device_str The string representation of the commanded device.
     /// @return A shutter command representation of the input command.
-    ShutterCommand decodeCalibrationCommand(const String& device_str);
+    void createCalibrationCommand(const String& device_str);
 
-    /// @brief Sends a normal motion command.
-    /// @param shutter The shutter which is being commanded.
-    /// @param command The command being sent.
-    void sendNormalCommand(Shutter& shutter, Shutter::Command command);
-
-    /// @brief Sends an absolute motion command.
-    /// @param shutter The shutter which is being commanded.
-    /// @param position The position where the shutter is being commanded to move.
-    void sendAbsoluteCommand(Shutter& shutter, int position);
 private:
-    /// @brief Processes a command.
-    /// @param command Reference to the commamnd instance.
-    void processCommand(const ShutterCommand& command);
-    /// @brief Calibrates a device.
-    /// @param shutter Reference to the shutter instance to be calibrated. 
-    void calibrate(Shutter& shutter);
-
-    /// @brief The command queue.
-    std::deque<ShutterCommand> command_queue_;
     /// @brief Container storing the shutters.
     std::array<Shutter, 4> shutters_; //
     /// @brief The transmitter.
-    Transmitter transmitter_;
+    std::shared_ptr<Transmitter> transmitter_;
+    int current_cmd_id_ = -1;
 };

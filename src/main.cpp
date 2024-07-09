@@ -21,22 +21,24 @@
 #include "shutter_controller.h" 
 #include "../credentials/credentials.h"
 
+// Define the macro to disable transmission, and to enable printing to Serial.
+// #define DEBUG
+
 const unsigned int TRANSMIT_PIN = 1;
 // Set web server port number to 80
 AsyncWebServer server(80);
-// TODO redo this
 ShutterController controller(TRANSMIT_PIN);
 
-const char* command_param = "command";// String type input
-const char* shutter_scale_param = "shutter_scale";// String type input
+const char* command_param = "command";
+const char* shutter_scale_param = "shutter_scale";
 
-const char* living_room_door_param = "living_room_door";// String type input
-const char* living_room_window_param = "living_room_window";// String type input
-const char* bedroom_door_param = "bedroom_door";// String type input
-const char* bedroom_window_param = "bedroom_window";// String type input
+const char* living_room_door_param = "living_room_door";
+const char* living_room_window_param = "living_room_window";
+const char* bedroom_door_param = "bedroom_door";
+const char* bedroom_window_param = "bedroom_window";
 
 unsigned long prev_exec_time_ms = 0;
-unsigned long exec_time_ms = 100; 
+unsigned long exec_period_ms = 20; 
 
 
 void notFound(AsyncWebServerRequest *request) 
@@ -47,15 +49,12 @@ void notFound(AsyncWebServerRequest *request)
 
 void setup() 
 {
+#ifdef DEBUG
+    Serial.begin(9600);
+#endif
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type");
-
-    //GPIO 1 (TX) swap the pin to a GPIO.
-    // TODO redo thiss
-    pinMode(TRANSMIT_PIN, FUNCTION_3); 
-    // Initialize the output variables as outputs
-    pinMode(TRANSMIT_PIN, OUTPUT);
 
     if (!LittleFS.begin())
     {
@@ -90,25 +89,23 @@ void setup()
         {
             notFound(request);
         }
-        if (!ret.containsKey("please")) 
+        if (!ret.containsKey("calibrate")) 
         {
             notFound(request);
         }
-        const auto command = controller.decodeCalibrationCommand(ret["please"]);
-        controller.addCommand(command);
+        controller.createCalibrationCommand(ret["calibrate"]);
         request->send(200);
     }
     });
 
-    // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
+    // Send a GET request to <ESP_IP>/get?xy
     server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) 
     {
         if (request->hasParam(command_param)) 
         {
             // Normal motion command
             String command = request->getParam(command_param)->value();
-            ShutterCommand normal_command = controller.decodeCommand(command);
-            controller.addCommand(normal_command);
+            controller.createRelativeCommand(command);
         }
         else if (request->hasParam(shutter_scale_param))
         {
@@ -122,8 +119,7 @@ void setup()
             {
                 continue;
             }
-            ShutterCommand absolute_command = controller.decodeAbsoluteCommand(p->name(), position_str);
-            controller.addCommand(absolute_command);
+            controller.createAbsoluteCommand(p->name(), position_str);
       }
     }
         request->send(LittleFS, "/index.html", "text/html");
@@ -136,9 +132,10 @@ void setup()
 
 void loop()
 {
-    const auto cur_exec_time_ms = millis();
-    if (cur_exec_time_ms - prev_exec_time_ms > exec_time_ms)
+    const auto time_ms = millis();
+    if (time_ms - prev_exec_time_ms > exec_period_ms)
     {
         controller.execute();
+        prev_exec_time_ms = time_ms;
     }
 }

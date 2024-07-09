@@ -15,206 +15,150 @@
 #include "shutter_controller.h"
 #include "shutter_params.h"
 
-ShutterController::ShutterController(int transmit_pin):
-    transmitter_(transmit_pin)
+ShutterController::ShutterController(int transmit_pin)
 {
+    transmitter_ = std::make_shared<Transmitter>(transmit_pin);
     shutters_[Shutter::Device::LIVING_DOOR] = 
       Shutter(
+        transmitter_,
         ShutterParams::living_door_device_id,
         ShutterParams::living_room_door_time_up, 
         ShutterParams::living_room_door_time_down);
     shutters_[Shutter::Device::LIVING_WINDOW] = 
       Shutter(
+        transmitter_,
         ShutterParams::living_window_device_id,
         ShutterParams::living_room_window_time_up, 
         ShutterParams::living_room_window_time_down);
     shutters_[Shutter::Device::BEDROOM_DOOR] = 
       Shutter(
+        transmitter_,
         ShutterParams::bedroom_door_device_id,
         ShutterParams::bedroom_door_time_up, 
         ShutterParams::bedroom_door_time_down);
     shutters_[Shutter::Device::BEDROOM_WINDOW] = 
       Shutter(
+        transmitter_,
         ShutterParams::bedroom_window_device_id,
         ShutterParams::bedroom_window_time_up, 
         ShutterParams::bedroom_window_time_down);
 }
 
-ShutterCommand ShutterController::decodeCommand(const String& command)
+void ShutterController::createRelativeCommand(const String& command)
 {
-    ShutterCommand decoded_command;
     // A command has the following format: "3,up"
     if (command[1] != ',')
-    {
-        return decoded_command;
-    }
-
-    decoded_command.type = Shutter::CommandType::NORMAL;
-    char device_char = command[0];
-    char dir_char = command[2];
-
-    switch (device_char)
-    {
-        case '0':
-            decoded_command.device = Shutter::Device::BEDROOM_WINDOW;
-            break;
-        case '1':
-            decoded_command.device = Shutter::Device::BEDROOM_DOOR;
-            break;
-        case '2':
-            decoded_command.device = Shutter::Device::LIVING_WINDOW;
-            break;
-        case '3':
-            decoded_command.device = Shutter::Device::LIVING_DOOR;
-            break;
-    }
-
-    switch (dir_char)
-    {
-        case 'u':
-            decoded_command.command = Shutter::Command::UP;
-            break;
-        case 's':
-            decoded_command.command = Shutter::Command::STOP;
-            break;
-        case 'd':
-            decoded_command.command = Shutter::Command::DOWN;
-            break;
-    }
-
-    return decoded_command;
-}
-
-ShutterCommand ShutterController::decodeAbsoluteCommand (const String& device_str, const String& position_str)
-{
-    ShutterCommand decoded_command;
-    decoded_command.type = Shutter::CommandType::ABSOLUTE;
-    // Select device
-    if (device_str == "living_room_door")
-    {
-        decoded_command.device = Shutter::Device::LIVING_DOOR;
-    }
-    else if (device_str == "living_room_window")
-    {
-        decoded_command.device = Shutter::Device::LIVING_WINDOW;
-    }
-    else if (device_str == "bedroom_door")
-    {
-        decoded_command.device = Shutter::Device::BEDROOM_DOOR;
-    }
-    else if (device_str == "bedroom_window")
-    {
-        decoded_command.device = Shutter::Device::BEDROOM_WINDOW;
-    }
-
-    const int received_position = position_str.toInt();
-    const int decoded_position = std::max(0, std::min(received_position, 100));
-    decoded_command.position = decoded_position;
-    return decoded_command;
-}
-
-ShutterCommand ShutterController::decodeCalibrationCommand(const String& device_str)
-{
-    ShutterCommand ret;
-    ret.type = Shutter::CommandType::CALIBRATE;
-    if (device_str == "0")
-    {
-        ret.device = Shutter::Device::LIVING_DOOR;
-    }
-    else if (device_str == "1")
-    {
-        ret.device = Shutter::Device::LIVING_WINDOW;
-    }
-    else if (device_str == "2")
-    {
-        ret.device = Shutter::Device::LIVING_WINDOW;
-    }
-        else if (device_str == "3")
-    {
-        ret.device = Shutter::Device::LIVING_WINDOW;
-    }
-    else
-    {
-        ret.device = Shutter::Device::UNKNOWN_DEVICE;
-    }
-    return ret;
-}
-
-void ShutterController::execute()
-{
-    if (!command_queue_.empty())
-    {
-        const ShutterCommand& current_command = command_queue_.front();
-        processCommand(current_command);
-        command_queue_.pop_front();
-    }
-}
-
-void ShutterController::processCommand(const ShutterCommand& command)
-{
-    if (command.device == Shutter::Device::UNKNOWN_DEVICE || 
-        command.type == Shutter::CommandType::UNKNOWN || 
-        command.device == Shutter::Device::ALL) // Unsupported for now. TODO!
     {
         return;
     }
 
-    auto& shutter = shutters_[command.device];
-    if (command.type == Shutter::CommandType::NORMAL)
+    Shutter::Device device = Shutter::Device::UNKNOWN_DEVICE;
+    char device_char = command[0];
+    switch (device_char)
     {
-        sendNormalCommand(shutter, command.command);
+        case '0':
+            device = Shutter::Device::BEDROOM_WINDOW;
+            break;
+        case '1':
+            device = Shutter::Device::BEDROOM_DOOR;
+            break;
+        case '2':
+            device = Shutter::Device::LIVING_WINDOW;
+            break;
+        case '3':
+            device = Shutter::Device::LIVING_DOOR;
+            break;
+        default:
+            return;
     }
-    else if (command.type == Shutter::CommandType::ABSOLUTE)
+
+    Instruction instruction = Instruction::UNKNOWN;
+    char dir_char = command[2];
+    switch (dir_char)
     {
-        sendAbsoluteCommand(shutter, command.position);
+        case 'u':
+            instruction = Instruction::UP;
+            break;
+        case 's':
+            instruction = Instruction::STOP;
+            break;
+        case 'd':
+            instruction = Instruction::DOWN;
+            break;
+        default:
+            return;
     }
-    else if (command.type == Shutter::CommandType::CALIBRATE)
+    if (instruction == Instruction::STOP)
     {
-        calibrate(shutter);
+        shutters_[device].clearQueue();
     }
+    shutters_[device].addCommand(std::make_unique<RelativeCommand>(++current_cmd_id_, instruction));
 }
 
-void ShutterController::addCommand(const ShutterCommand& command)
+void ShutterController::createAbsoluteCommand(const String& device_str, const String& position_str)
 {
-    command_queue_.push_back(command);
+    Shutter::Device device = Shutter::Device::UNKNOWN_DEVICE;
+    if (device_str == "living_room_door")
+    {
+        device = Shutter::Device::LIVING_DOOR;
+    }
+    else if (device_str == "living_room_window")
+    {
+        device = Shutter::Device::LIVING_WINDOW;
+    }
+    else if (device_str == "bedroom_door")
+    {
+        device = Shutter::Device::BEDROOM_DOOR;
+    }
+    else if (device_str == "bedroom_window")
+    {
+        device = Shutter::Device::BEDROOM_WINDOW;
+    }
+    else
+    {
+        return;
+    }
+
+    if (!shutters_[device].calibrated())
+    {
+        shutters_[device].addCommand(std::make_unique<CalibrationCommand>(++current_cmd_id_));
+    }
+
+    const int received_position = position_str.toInt();
+    const int target_position = std::max(0, std::min(received_position, 100));
+    shutters_[device].addCommand(std::make_unique<AbsoluteCommand>(++current_cmd_id_, target_position));
 }
 
-void ShutterController::sendNormalCommand(Shutter& shutter, Shutter::Command command)
+void ShutterController::createCalibrationCommand(const String& device_str)
 {
-    transmitter_.sendCommand(shutter.getId(), command);
+    Shutter::Device device = Shutter::Device::UNKNOWN_DEVICE;
+    if (device_str == "0")
+    {
+        device = Shutter::Device::LIVING_DOOR;
+    }
+    else if (device_str == "1")
+    {
+        device = Shutter::Device::LIVING_WINDOW;
+    }
+    else if (device_str == "2")
+    {
+        device = Shutter::Device::LIVING_WINDOW;
+    }
+        else if (device_str == "3")
+    {
+        device = Shutter::Device::LIVING_WINDOW;
+    }
+    else
+    {
+        return;
+    }
+    shutters_[device].addCommand(std::make_unique<CalibrationCommand>(++current_cmd_id_));
 }
 
-void ShutterController::sendAbsoluteCommand(Shutter& shutter, int position)
+void ShutterController::execute()
 {
-    if (!shutter.calibrated())
+    for (auto& shutter: shutters_)
     {
-        calibrate(shutter);
+        shutter.execute();
     }
-    int delta_p = position - shutter.getPosition();
-    // 100 incr ... 25 s
-    if (delta_p > 0)
-    {
-        // Shutter should move down
-        const auto dt_down = std::round((static_cast<double>(std::abs(delta_p)) / 100.0) * shutter.getTimeDown() * 1000.0);
-        transmitter_.sendCommand(shutter.getId(), Shutter::Command::DOWN);
-        delay(dt_down);
-    }
-    else //  (delta_p < 0)
-    {
-        // Shutter should move up
-        const auto dt_up = std::round((static_cast<double>(std::abs(delta_p)) / 100.0) * shutter.getTimeUp() * 1000.0);
-        transmitter_.sendCommand(shutter.getId(), Shutter::Command::UP);
-        delay(dt_up);
-    }
-    transmitter_.sendCommand(shutter.getId(), Shutter::Command::STOP);
-    shutter.setPosition(position);
-}
-
-void ShutterController::calibrate(Shutter& shutter)
-{
-    transmitter_.sendCommand(shutter.getId(), Shutter::Command::UP);
-    const auto time_up_ms = static_cast<unsigned long>(shutter.getTimeUp() * 1000.0);
-    delay(time_up_ms);
-    shutter.setPosition(0);
-    shutter.setCalibrated(true);
 }
