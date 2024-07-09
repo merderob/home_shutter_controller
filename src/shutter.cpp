@@ -65,6 +65,7 @@ void Shutter::executeSend(const std::unique_ptr<Command>& command)
             const auto time_up_ms = static_cast<int>(time_up_ * 1000.0);
             command->setEndTime(maybe_sent_at + time_up_ms);
         }
+        calibrated_ = false;
         break;
     }
     case Command::Type::CALIBRATE:

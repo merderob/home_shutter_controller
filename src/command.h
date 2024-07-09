@@ -74,7 +74,6 @@ public:
 private:
     /// @brief The absolute target position to command.
     int target_position_ = 0;
-    std::array<Command*, 2> commands_;
 };
 
 class CalibrationCommand : public Command
