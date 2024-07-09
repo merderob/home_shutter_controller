@@ -18,9 +18,11 @@
 #include <memory>
 #include <deque>
 
+/// @brief Class encapsulating a shutter instance.
 class Shutter
 {
 public:
+    /// @Enum encapsulating the shutter device types.
     enum Device
     {
         BEDROOM_WINDOW,
@@ -30,24 +32,30 @@ public:
         ALL,
         UNKNOWN_DEVICE
     };
+
+    /// @brief Default constructor.
     Shutter();
 
     /// @brief  Constructor.
     /// @param time_up Time required to move up.
     /// @param time_down Time required to move down.
     Shutter(std::shared_ptr<Transmitter> transmitter, unsigned char id, double time_up, double time_down);
-
+    
+    /// @brief Returns if the shutter is calibrated.
+    /// @return True, if the shutter is calibrated.
     bool calibrated() const;
-
+    /// @brief Adds a command to the command queue.
+    /// @param command Pointer to the command instance.
     void addCommand(std::unique_ptr<Command> command);
-
+    /// @brief The main execution cycle.
     void execute();
-
+    /// @brief Clears the command queue.
     void clearQueue();
 
 private:
+    /// @brief Executes the command's "send" operation.
     void executeSend(const std::unique_ptr<Command>& command);
-
+    /// @brief Executes the command's "done" operation.
     void executeDone(const std::unique_ptr<Command>& command);
 
     /// @brief The device id.
@@ -60,7 +68,8 @@ private:
     double time_up_ = 0.0;
     /// @brief Time required to move down. [s]
     double time_down_ = 0.0;
-
+    /// @brief The command queue for this shutter.
     std::deque<std::unique_ptr<Command>> commands_;
+    /// @brief Pointer to the transmitter instance.
     std::shared_ptr<Transmitter> transmitter_;
 };

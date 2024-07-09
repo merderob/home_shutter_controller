@@ -44,7 +44,8 @@ private:
     int transmit_pin_;
     /// @brief parameter container structure.
     RFParams params_;
-
+    /// @brief The static message header, which identifies the shutter's receivers.
     const std::array<char, 3> header_ {0b11001011, 0b01111010, 0b01010001};
+    /// @brief The array of instructions.
     std::array<char, 3> instructions_;
 };
