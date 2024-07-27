@@ -3,6 +3,6 @@
 
 .pio/
 
-credentials/Credentials.h
+credentials/credentials.h
 
 mklittlefs.exe
