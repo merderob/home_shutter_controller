@@ -15,10 +15,10 @@
 #include <Arduino.h>
 
 #include "shutter.h"
-#include "shutter_params.h"
+#include "params.h"
 
 Shutter::Shutter() : 
-    device_id_(ShutterParams::none_device_id), position_(0), calibrated_(false), time_up_(0), time_down_(0)
+    device_id_(params::shutter::none_device_id), position_(0), calibrated_(false), time_up_(0), time_down_(0)
 {
 
 }

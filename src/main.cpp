@@ -17,12 +17,11 @@
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <TimeLib.h>    // https://github.com/PaulStoffregen/Time
 
 #include "shutter_controller.h" 
 #include "../credentials/credentials.h"
-
-// Define the macro to disable transmission, and to enable printing to Serial.
-// #define DEBUG
+#include "clock.h"
 
 const unsigned int TRANSMIT_PIN = 1;
 // Set web server port number to 80
@@ -38,7 +37,7 @@ const char* bedroom_door_param = "bedroom_door";
 const char* bedroom_window_param = "bedroom_window";
 
 unsigned long prev_exec_time_ms = 0;
-unsigned long exec_period_ms = 20; 
+unsigned long exec_period_ms = 100; 
 
 
 void notFound(AsyncWebServerRequest *request) 
@@ -67,6 +66,12 @@ void setup()
     {
         delay(500);
     }
+
+#ifdef DEBUG
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+#endif
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
           { request->send(LittleFS, "/index.html", "text/html"); });

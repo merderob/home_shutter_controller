@@ -13,7 +13,7 @@
 // ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "shutter_controller.h"
-#include "shutter_params.h"
+#include "params.h"
 
 ShutterController::ShutterController(int transmit_pin)
 {
@@ -21,27 +21,27 @@ ShutterController::ShutterController(int transmit_pin)
     shutters_[Shutter::Device::LIVING_DOOR] = 
       Shutter(
         transmitter_,
-        ShutterParams::living_door_device_id,
-        ShutterParams::living_room_door_time_up, 
-        ShutterParams::living_room_door_time_down);
+        params::shutter::living_door_device_id,
+        params::shutter::living_room_door_time_up, 
+        params::shutter::living_room_door_time_down);
     shutters_[Shutter::Device::LIVING_WINDOW] = 
       Shutter(
         transmitter_,
-        ShutterParams::living_window_device_id,
-        ShutterParams::living_room_window_time_up, 
-        ShutterParams::living_room_window_time_down);
+        params::shutter::living_window_device_id,
+        params::shutter::living_room_window_time_up, 
+        params::shutter::living_room_window_time_down);
     shutters_[Shutter::Device::BEDROOM_DOOR] = 
       Shutter(
         transmitter_,
-        ShutterParams::bedroom_door_device_id,
-        ShutterParams::bedroom_door_time_up, 
-        ShutterParams::bedroom_door_time_down);
+        params::shutter::bedroom_door_device_id,
+        params::shutter::bedroom_door_time_up, 
+        params::shutter::bedroom_door_time_down);
     shutters_[Shutter::Device::BEDROOM_WINDOW] = 
       Shutter(
         transmitter_,
-        ShutterParams::bedroom_window_device_id,
-        ShutterParams::bedroom_window_time_up, 
-        ShutterParams::bedroom_window_time_down);
+        params::shutter::bedroom_window_device_id,
+        params::shutter::bedroom_window_time_up, 
+        params::shutter::bedroom_window_time_down);
 }
 
 void ShutterController::createRelativeCommand(const String& command)

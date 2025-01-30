@@ -14,24 +14,26 @@
 
 #pragma once
 
-struct ShutterParams
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+#include <memory>
+#include <Timezone.h>   // https://github.com/JChristensen/Timezone
+
+#include "params.h"
+
+class Clock
 {
-    static const unsigned char bedroom_window_device_id = 0b000000001;
-    static constexpr double bedroom_window_time_up = 26.695;
-    static constexpr double bedroom_window_time_down = 26.1;
+public:
+    Clock();
+    void init();
+    void update();
 
-    static const unsigned char bedroom_door_device_id = 0b00000010;
-    static constexpr double bedroom_door_time_up = 26.457;
-    static constexpr double bedroom_door_time_down = 25.06;
+#ifdef DEBUG
+    void printDateTime() const;
+#endif
 
-    static const unsigned char living_window_device_id = 0b00000011;
-    static constexpr double living_room_window_time_up = 24.5;
-    static constexpr double living_room_window_time_down = 25.06;
-
-    static const unsigned char living_door_device_id = 0b00000100;
-    static constexpr double living_room_door_time_up = 26.1;
-    static constexpr double living_room_door_time_down = 24.76;
-
-    static const unsigned char all_device_id = 0b00000000;
-    static const unsigned char none_device_id = 0b00000101;
+private:
+    WiFiUDP ntp_udp_;
+    std::unique_ptr<Timezone> time_zone_;
+    std::unique_ptr<NTPClient> time_client_ = nullptr;
 };
